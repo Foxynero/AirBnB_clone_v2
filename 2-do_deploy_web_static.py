@@ -30,7 +30,7 @@ def do_pack():
 
 def do_deploy(archive_path):
     """
-        Distribute archive.
+        Fabric script that distrubutes an archive to server.
     """
     if os.path.exists(archive_path):
         archived_file = archive_path[9:]

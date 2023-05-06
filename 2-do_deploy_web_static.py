@@ -13,41 +13,50 @@ env.key_filename = '~/.ssh/id_rsa'
 
 
 def do_pack():
-    """
-        return the archive path if archive has generated correctly.
-    """
+    """pack directory tar format to another directory"""
 
-    local("mkdir -p versions")
-    date = datetime.now().strftime("%Y%m%d%H%M%S")
-    archived_f_path = "versions/web_static_{}.tgz".format(date)
-    t_gzip_archive = local("tar -cvzf {} web_static".format(archived_f_path))
-
-    if t_gzip_archive.succeeded:
-        return archived_f_path
-    else:
+    local('mkdir -p versions')
+    format_time = datetime.now().strftime('%Y%m%d%H%M%S')
+    filepath = 'versions/web_static_{}.tgz'.format(format_time)
+    cmd = "tar -cvzf {} web_static/".format(filepath)
+    try:
+        local(cmd, capture=True)
+        return filepath
+    except:
         return None
 
 
 def do_deploy(archive_path):
-    """
-        Fabric script that distrubutes an archive to server.
-    """
-    if os.path.exists(archive_path):
-        archived_file = archive_path[9:]
-        newest_version = "/data/web_static/releases/" + archived_file[:-4]
-        archived_file = "/tmp/" + archived_file
-        put(archive_path, "/tmp/")
-        run("sudo mkdir -p {}".format(newest_version))
-        run("sudo tar -xzf {} -C {}/".format(archived_file,
-                                             newest_version))
-        run("sudo rm {}".format(archived_file))
-        run("sudo mv {}/web_static/* {}".format(newest_version,
-                                                newest_version))
-        run("sudo rm -rf {}/web_static".format(newest_version))
-        run("sudo rm -rf /data/web_static/current")
-        run("sudo ln -s {} /data/web_static/current".format(newest_version))
+    """deploy tar package to remote server"""
 
-        print("New version deployed!")
+    if not os.path.isfile(archive_path) and not os.path.exists(archive_path):
+        return False
+
+    put(archive_path, "/tmp")
+    try:
+        fileonly = os.path.basename(archive_path)
+        filename = os.path.splitext(fileonly)[0]
+        run("mkdir -p /data/web_static/releases/{}/".format(filename))
+        from_here = "/tmp/{}".format(fileonly)
+        to_here = "/data/web_static/releases/{}/".format(filename)
+        run("tar -xzf {} -C {}".format(from_here, to_here))
+        run('rm /tmp/{}'.format(fileonly))
+        run('mv {}web_static/* {}'.format(to_here, to_here))
+        run('rm -rf {}web_static'.format(to_here))
+        run('rm -rf /data/web_static/current')
+        run('ln -s {} /data/web_static/current'.format(to_here))
+        print('New version deployed!')
         return True
+    except:
+        return False
+    return True
 
-    return False
+
+def deploy():
+    """deploy all"""
+
+    archive_path = do_pack()
+    if not os.path.isfile(archive_path) and not os.path.exists(archive_path):
+        return False
+
+    return do_deploy(archive_path)

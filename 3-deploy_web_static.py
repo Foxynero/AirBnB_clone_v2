@@ -7,7 +7,9 @@ from fabric.api import local
 from fabric.api import put
 from fabric.api import run
 
-env.hosts = ["104.196.168.90", "35.196.46.172"]
+env.hosts = ["54.146.76.82", "54.165.77.174"]
+env.user = 'ubuntu'
+env.key_filename = '~/.ssh/id_rsa'
 
 
 def do_pack():
@@ -64,6 +66,7 @@ def do_deploy(archive_path):
         return False
     if run("ln -s /data/web_static/releases/{}/ /data/web_static/current".
            format(name)).failed is True:
+        print('New version deployed!')
         return False
     return True
 

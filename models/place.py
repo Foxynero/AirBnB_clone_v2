@@ -46,7 +46,7 @@ class Place(BaseModel, Base):
         amenity_ids (list): An id list of all linked amenities.
     """
     __tablename__ = "places"
-    city_id = Column(String(60), ForeignKey("cities.id"), collation=("latin1_swedish_ci"), nullable=False)
+    city_id = Column(String(60, collation='latin1_swedish_ci'), ForeignKey("cities.id"), nullable=False)
     user_id = Column(String(60), ForeignKey("users.id"), nullable=False)
     name = Column(String(128), nullable=False)
     description = Column(String(1024))
